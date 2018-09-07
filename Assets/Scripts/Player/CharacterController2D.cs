@@ -12,7 +12,7 @@ public class CharacterController2D : MonoBehaviour
     [SerializeField] private Transform m_CeilingCheck;                          // A position marking where to check for ceilings
     [SerializeField] private Collider2D m_CrouchDisableCollider;                // A collider that will be disabled when crouching
 
-    const float k_GroundedRadius = .2f; // Radius of the overlap circle to determine if grounded
+    const float k_GroundedRadius = .25f; // Radius of the overlap circle to determine if grounded
     private bool m_Grounded;            // Whether or not the player is grounded.
     const float k_CeilingRadius = .2f; // Radius of the overlap circle to determine if the player can stand up
     private Rigidbody2D m_Rigidbody2D;
@@ -66,23 +66,42 @@ public class CharacterController2D : MonoBehaviour
         bool wasGrounded = m_Grounded;
         m_Grounded = false;
         
-        // The player is grounded if a circlecast to the groundcheck position hits anything designated as ground
-        // This can be done using layers instead but Sample Assets will not overwrite your project settings.
-        Collider2D[] colliders = Physics2D.OverlapCircleAll(m_GroundCheck.position, k_GroundedRadius, m_WhatIsGround);
-        for (int i = 0; i < colliders.Length; i++)
+        RaycastHit2D []hit = new RaycastHit2D[1];
+        if(Physics2D.RaycastNonAlloc(m_GroundCheck.position, Vector2.down, hit, 0.2f, m_WhatIsGround) > 0)
         {
-            if (colliders[i].gameObject != gameObject)
+            m_Grounded = true;
+            if (!wasGrounded && m_Rigidbody2D.velocity.y <= 0f)
             {
-                m_Grounded = true;
-                if (!wasGrounded && m_Rigidbody2D.velocity.y < 0f)
-                {
-                    OnLandEvent.Invoke();
-                    m_wasFalling = false;
-                    m_hasJump = false;
-                }
-
+                OnLandEvent.Invoke();
+                m_wasFalling = false;
+                m_hasJump = false;
+            }
+            //Correção do erro de não detectar o chão ao colidir com a lateral da plataforma antes de subir
+            else if(m_Rigidbody2D.velocity.y == 0f && m_hasJump)
+            {
+                OnLandEvent.Invoke();
+                m_wasFalling = false;
+                m_hasJump = false;
             }
         }
+
+        // The player is grounded if a circlecast to the groundcheck position hits anything designated as ground
+        // This can be done using layers instead but Sample Assets will not overwrite your project settings.
+        //Collider2D[] colliders = Physics2D.OverlapCircleAll(m_GroundCheck.position, k_GroundedRadius, m_WhatIsGround);
+        //for (int i = 0; i < colliders.Length; i++)
+        //{
+        //    if (colliders[i].gameObject != gameObject)
+        //    {
+        //        m_Grounded = true;
+        //        if (!wasGrounded && m_Rigidbody2D.velocity.y < 0f)
+        //        {
+        //            OnLandEvent.Invoke();
+        //            m_wasFalling = false;
+        //            m_hasJump = false;
+        //        }
+
+        //    }
+        //}
     }
 
 
