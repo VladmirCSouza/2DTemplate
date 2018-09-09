@@ -9,6 +9,8 @@ public class CharacterController2D : MonoBehaviour
     [SerializeField] private bool m_AirControl = false;                         // Whether or not a player can steer while jumping;
     [SerializeField] private LayerMask m_WhatIsGround;                          // A mask determining what is ground to the character
     [SerializeField] private Transform m_GroundCheck;                           // A position marking where to check if the player is grounded.
+    [SerializeField] private Transform m_GroungCheckLeft;
+    [SerializeField] private Transform m_GroungCheckRight;
     [SerializeField] private Transform m_CeilingCheck;                          // A position marking where to check for ceilings
     [SerializeField] private Collider2D m_CrouchDisableCollider;                // A collider that will be disabled when crouching
 
@@ -83,7 +85,16 @@ public class CharacterController2D : MonoBehaviour
                 m_wasFalling = false;
                 m_hasJump = false;
             }
+
+            if (Physics2D.RaycastNonAlloc(m_GroungCheckRight.position, Vector2.down, hit, 0.2f, m_WhatIsGround) == 0 ||
+                Physics2D.RaycastNonAlloc(m_GroungCheckLeft.position, Vector2.down, hit, 0.2f, m_WhatIsGround) == 0)
+            {
+                Debug.Log("Animacao equlibrio");
+                //TODO: Dispara animação equilibrio
+            }
         }
+
+        
 
         // The player is grounded if a circlecast to the groundcheck position hits anything designated as ground
         // This can be done using layers instead but Sample Assets will not overwrite your project settings.
@@ -100,8 +111,8 @@ public class CharacterController2D : MonoBehaviour
         //            m_hasJump = false;
         //        }
 
-        //    }
-        //}
+            //    }
+            //}
     }
 
 

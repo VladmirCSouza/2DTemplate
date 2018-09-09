@@ -29,7 +29,7 @@ public class CameraMovimentoBloco : MonoBehaviour {
     {
         if (Vector2.Distance(transform.position, m_newPosition) > 0.01f)
         {
-            currPosition = m_newPosition + (Vector3.forward * -10);
+            currPosition = m_newPosition;// + (Vector3.forward * -10);
             transform.position = Vector3.SmoothDamp(transform.position, currPosition, ref velocity, smoothTime);
         }
         else
