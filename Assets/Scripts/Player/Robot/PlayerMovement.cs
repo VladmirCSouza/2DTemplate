@@ -54,4 +54,9 @@ public class PlayerMovement : MonoBehaviour {
     {
         animator.SetFloat("ySpeed", ySpeed);
     }
+
+    public void OnloseBalance()
+    {
+        animator.SetTrigger("LoseBalance");
+    }
 }

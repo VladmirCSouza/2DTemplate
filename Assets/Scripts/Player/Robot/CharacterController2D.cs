@@ -9,7 +9,7 @@ public class CharacterController2D : MonoBehaviour
     [SerializeField] private bool m_AirControl = false;                         // Whether or not a player can steer while jumping;
     [SerializeField] private LayerMask m_WhatIsGround;                          // A mask determining what is ground to the character
     [SerializeField] private Transform m_GroundCheck;                           // A position marking where to check if the player is grounded.
-    [SerializeField] private Transform m_GroungCheckLeft;
+    //[SerializeField] private Transform m_GroungCheckLeft;
     [SerializeField] private Transform m_GroungCheckRight;
     [SerializeField] private Transform m_CeilingCheck;                          // A position marking where to check for ceilings
     [SerializeField] private Collider2D m_CrouchDisableCollider;                // A collider that will be disabled when crouching
@@ -28,6 +28,8 @@ public class CharacterController2D : MonoBehaviour
     public UnityEvent OnFallEvent;
     private bool m_wasFalling = false;
     private bool m_hasJump = false;
+    public UnityEvent OnLoseBalance;
+    private bool m_hasLoseBalance = true;
 
     [System.Serializable]
     public class BoolEvent : UnityEvent<bool> { }
@@ -39,8 +41,6 @@ public class CharacterController2D : MonoBehaviour
     public class FloatEvent : UnityEvent<float> { }
     public FloatEvent OnSpeedYChange;
 
-
-    
 
     private void Awake()
     {
@@ -63,13 +63,14 @@ public class CharacterController2D : MonoBehaviour
         if (m_Rigidbody2D.velocity.y != 0f)
         {
             OnSpeedYChange.Invoke(Mathf.Floor(m_Rigidbody2D.velocity.y * 100) / 100);
+            m_hasLoseBalance = true;
         }
 
         bool wasGrounded = m_Grounded;
         m_Grounded = false;
-        
-        RaycastHit2D []hit = new RaycastHit2D[1];
-        if(Physics2D.RaycastNonAlloc(m_GroundCheck.position, Vector2.down, hit, 0.2f, m_WhatIsGround) > 0)
+
+        RaycastHit2D[] hit = new RaycastHit2D[1];
+        if (Physics2D.RaycastNonAlloc(m_GroundCheck.position, Vector2.down, hit, 0.2f, m_WhatIsGround) > 0)
         {
             m_Grounded = true;
             if (!wasGrounded && m_Rigidbody2D.velocity.y <= 0f)
@@ -79,22 +80,28 @@ public class CharacterController2D : MonoBehaviour
                 m_hasJump = false;
             }
             //Correção do erro de não detectar o chão ao colidir com a lateral da plataforma antes de subir
-            else if(m_Rigidbody2D.velocity.y == 0f && m_hasJump)
+            else if (m_Rigidbody2D.velocity.y == 0f && m_hasJump)
             {
                 OnLandEvent.Invoke();
                 m_wasFalling = false;
                 m_hasJump = false;
             }
 
-            if (Physics2D.RaycastNonAlloc(m_GroungCheckRight.position, Vector2.down, hit, 0.2f, m_WhatIsGround) == 0 ||
-                Physics2D.RaycastNonAlloc(m_GroungCheckLeft.position, Vector2.down, hit, 0.2f, m_WhatIsGround) == 0)
+            if (!m_hasJump && !m_wasFalling && !m_hasLoseBalance)
             {
-                Debug.Log("Animacao equlibrio");
-                //TODO: Dispara animação equilibrio
+                if (Physics2D.RaycastNonAlloc(m_GroungCheckRight.position, Vector2.down, hit, 0.2f, m_WhatIsGround) == 0)
+                //|| Physics2D.RaycastNonAlloc(m_GroungCheckLeft.position, Vector2.down, hit, 0.2f, m_WhatIsGround) == 0)
+                {
+                    m_hasLoseBalance = true;
+                    OnLoseBalance.Invoke();
+                    //TODO: Dispara animação equilibrio
+                }
             }
         }
 
         
+
+
 
         // The player is grounded if a circlecast to the groundcheck position hits anything designated as ground
         // This can be done using layers instead but Sample Assets will not overwrite your project settings.
@@ -111,8 +118,8 @@ public class CharacterController2D : MonoBehaviour
         //            m_hasJump = false;
         //        }
 
-            //    }
-            //}
+        //    }
+        //}
     }
 
 
@@ -177,19 +184,25 @@ public class CharacterController2D : MonoBehaviour
                 // ... flip the player.
                 Flip();
             }
+
+            if (move != 0)
+                m_hasLoseBalance = false;
         }
+
         // If the player should jump...
         if (m_Grounded && jump)
         {
+            m_hasLoseBalance = false;
+
             m_hasJump = true;
             // Add a vertical force to the player.
             m_Grounded = false;
             m_Rigidbody2D.AddForce(new Vector2(0f, m_JumpForce));
         }
 
-        if(!m_Grounded && !m_hasJump)
+        if (!m_Grounded && !m_hasJump)
         {
-            if(!m_wasFalling)
+            if (!m_wasFalling)
             {
                 m_wasFalling = true;
                 OnFallEvent.Invoke();
