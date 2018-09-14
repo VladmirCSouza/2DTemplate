@@ -19,28 +19,32 @@ public class Player : MonoBehaviour {
     [SerializeField] private Transform groundCheck;
     [SerializeField] private Transform groungCheckRight;
     [SerializeField] private Transform groungCheckLeft;
+    [SerializeField] private Collider2D colliderStand;
+    [SerializeField] private Collider2D colliderCrouch;
 
     private State currentState;
     private Animator animator;
     private Rigidbody2D rigidbody2D;
     private Vector3 velocity = Vector3.zero;
     private RaycastHit2D[] hit = new RaycastHit2D[2];
+    private Vector3 respawnPoint;
 
     void Awake()
     {
+        respawnPoint = transform.position;
         animator = GetComponent<Animator>();
         rigidbody2D = GetComponent<Rigidbody2D>();
         SetState(new IdleState(this));
     }
 
-    void Start ()
-    {
-        
-    }
-
 	void Update ()
     {
         currentState.Update();
+        //TODO: Just for debug purpose
+        if (Input.GetKeyDown(KeyCode.K))
+        {
+            KillPlayer();
+        }
 	}
 
     void FixedUpdate()
@@ -48,6 +52,10 @@ public class Player : MonoBehaviour {
         currentState.FixedUpdate();
     }
 
+    /// <summary>
+    /// Devine qual é o estado atual
+    /// </summary>
+    /// <param name="newState">Qual estado deverá ser chamado</param>
     public void SetState(State newState)
     {
         if (currentState != null)
@@ -60,22 +68,27 @@ public class Player : MonoBehaviour {
             currentState.OnStateEnter();
     }
 
-    public void Move(float move)
+    /// <summary>
+    /// Move o player
+    /// </summary>
+    /// <param name="speed">Velocidade de movimento</param>
+    public void Move(float speed)
     {
-        Vector3 targetVelocity = new Vector2(move * 10f * runSpeed, GetVelocity().y);
+        Vector3 targetVelocity = new Vector2(speed * 10f * runSpeed, GetVelocity().y);
         rigidbody2D.velocity = Vector3.SmoothDamp(rigidbody2D.velocity, targetVelocity, ref velocity, movementSmoothing);
 
-        if (move > 0 && FacingLeft())
+        if (speed > 0 && FacingLeft())
             Flip(false);
-        else if (move < 0 && !FacingLeft())
+        else if (speed < 0 && !FacingLeft())
             Flip(true);
     }
 
+    /// <summary>
+    /// Aplica a força para fazer o jogador pular
+    /// </summary>
     public void Jump()
     {
         rigidbody2D.AddForce(new Vector2(0, jumpForce));
-        //SetState(new JumpState(this));
-
     }
 
     /// <summary>
@@ -97,21 +110,21 @@ public class Player : MonoBehaviour {
     /// <returns>TRUE se o jogador estiver na beirada</returns>
     public bool OnEdge()
     {
-        if (GetVelocity().y != 0)
-            return false;
+        bool onEdge = false;
 
-        if (Physics2D.RaycastNonAlloc(groungCheckLeft.position, Vector2.down, hit, 0.2f, whatIsGround) > 0 ||
-            Physics2D.RaycastNonAlloc(groungCheckRight.position, Vector2.down, hit, 0.2f, whatIsGround) > 0)
-            return true;
+        if (FacingLeft())
+            onEdge = Physics2D.RaycastNonAlloc(groungCheckLeft.position, Vector2.down, hit, 0.2f, whatIsGround) <= 0;
+        else
+            onEdge = Physics2D.RaycastNonAlloc(groungCheckRight.position, Vector2.down, hit, 0.2f, whatIsGround) <= 0;
 
-        return false;
+        return onEdge;
     }
 
     /// <summary>
     /// Verifica se o player está "olhando para a direita
     /// </summary>
     /// <returns>TRUE se o jogador está olhando para a direita</returns>
-    private bool FacingLeft()
+    public bool FacingLeft()
     {
         return sprite.flipX;
     }
@@ -145,19 +158,62 @@ public class Player : MonoBehaviour {
         animator.SetFloat(name, value);
     }
 
+    /// <summary>
+    /// Controla opção de controlar jogador no ar
+    /// </summary>
+    /// <returns>TRUE se a opção está ligada no inspector</returns>
     public bool CanControlOnAir()
     {
         return airControl;
     }
 
+    /// <summary>
+    /// "Get" o multiplicador de velocidade para quando o jogador estiver abaixado
+    /// </summary>
+    /// <returns>Quantos % da velocidade sera utilizado qdo abaixado</returns>
     public float GetCrouchMultiplier()
     {
         return crouchSpeed;
     }
 
-
+    /// <summary>
+    /// "Get" a velocidade do Rigidbody
+    /// </summary>
+    /// <returns>Vector 2 da velocidade do player</returns>
     public Vector2 GetVelocity()
     {
         return rigidbody2D.velocity;
+    }
+
+    /// <summary>
+    /// Liga o collider do jogador em pé
+    /// </summary>
+    public void StandCollider()
+    {
+        colliderStand.enabled = true;
+        colliderCrouch.enabled = false;
+    }
+
+    /// <summary>
+    /// Liga o collider do jogador abaixado
+    /// </summary>
+    public void CrouchCollider()
+    {
+        colliderStand.enabled = false;
+        colliderCrouch.enabled = true;
+    }
+
+    /// <summary>
+    /// Função utilizada para chamar o estado de morte do player
+    /// </summary>
+    public void KillPlayer()
+    {
+        SetState(new DeadState(this));
+    }
+
+    public void Respawn()
+    {
+        rigidbody2D.position = respawnPoint;
+        SetState(new IdleState(this));
     }
 }

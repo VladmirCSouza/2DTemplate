@@ -27,6 +27,12 @@ public class RunningState : State {
 
         if (Input.GetButtonDown("Jump") && player.IsGrounded())
             player.SetState(new JumpState(player));
+
+        if(Input.GetButton("Crouch"))
+            player.SetState(new CrouchState(player));
+
+        if (Input.GetButton("Sneak"))
+            player.SetState(new SneakState(player));
     }
 
     public override void FixedUpdate()

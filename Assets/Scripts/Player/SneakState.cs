@@ -1,25 +1,24 @@
 ﻿using UnityEngine;
 
-public class CrouchState : State
+public class SneakState : State
 {
-
     private float horizontalMove = 0f;
 
-    public CrouchState(Player player) : base(player)
+    public SneakState(Player player) : base(player)
     {
-        //empty
     }
 
     public override void OnStateEnter()
     {
         base.OnStateEnter();
-        player.SetAnimation("Crouch", true);
-        player.CrouchCollider();
+        player.SetAnimation("Edge", player.OnEdge());
+        player.SetAnimation("Sneak", true);
     }
 
     public override void Update()
     {
         base.Update();
+
         horizontalMove = Input.GetAxisRaw("Horizontal") * Time.fixedDeltaTime;
 
         if (horizontalMove < 0 && player.FacingLeft() && player.OnEdge())
@@ -27,7 +26,7 @@ public class CrouchState : State
         else if (horizontalMove > 0 && !player.FacingLeft() && player.OnEdge())
             horizontalMove = 0;
 
-        if (Input.GetButtonUp("Crouch"))
+        if (Input.GetButtonUp("Sneak"))
         {
             if (horizontalMove == 0)
                 player.SetState(new IdleState(player));
@@ -42,12 +41,13 @@ public class CrouchState : State
 
         player.SetAnimation("xSpeed", Mathf.Abs(player.GetVelocity().x));
         player.Move(horizontalMove * player.GetCrouchMultiplier());
+
+        player.SetAnimation("Edge", player.OnEdge());
     }
 
     public override void OnStateExit()
     {
         base.OnStateExit();
-        player.SetAnimation("Crouch", false);
-        player.StandCollider();
+        player.SetAnimation("Sneak", false);
     }
 }

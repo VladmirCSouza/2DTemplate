@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 
-public class IdleState : State {
+public class IdleState : State
+{
 
     public IdleState(Player player) : base(player)
     {
@@ -10,6 +11,7 @@ public class IdleState : State {
     public override void OnStateEnter()
     {
         base.OnStateEnter();
+        player.SetAnimation("Edge", player.OnEdge());
         player.SetAnimation("Idle", true);
     }
 
@@ -21,8 +23,17 @@ public class IdleState : State {
         if (Input.GetButtonDown("Jump") && player.IsGrounded())
             player.SetState(new JumpState(player));
 
-        if(Input.GetButtonDown("Crouch"))
+        if (Input.GetButton("Crouch"))
             player.SetState(new CrouchState(player));
+
+        if (Input.GetButton("Sneak"))
+            player.SetState(new SneakState(player));
+    }
+
+    public override void FixedUpdate()
+    {
+        base.FixedUpdate();
+        player.SetAnimation("Edge", player.OnEdge());
     }
 
 
@@ -30,5 +41,6 @@ public class IdleState : State {
     {
         base.OnStateExit();
         player.SetAnimation("Idle", false);
+        player.SetAnimation("Edge", false);
     }
 }

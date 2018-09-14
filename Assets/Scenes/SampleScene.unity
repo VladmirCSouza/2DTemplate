@@ -2269,6 +2269,8 @@ MonoBehaviour:
   groundCheck: {fileID: 334817438}
   groungCheckRight: {fileID: 1428110310}
   groungCheckLeft: {fileID: 2039985800}
+  colliderStand: {fileID: 968363322}
+  colliderCrouch: {fileID: 968363321}
 --- !u!114 &968363328
 MonoBehaviour:
   m_ObjectHideFlags: 0
